@@ -1,14 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:camera/camera.dart';
-import 'dart:async';
-
-import '../providers/camera_providers.dart';
-import '../providers/detection_providers.dart';
-import '../widgets/camera_view_widget.dart';
-import '../widgets/analysis_status_widget.dart';
-import '../widgets/detection_overlay_widget.dart';
-import '../../../../shared/services/yolo_detection_service.dart';
+import 'package:ultralytics_yolo/ultralytics_yolo.dart';
+import 'package:ultralytics_yolo/widgets/yolo_controller.dart';
 
 class CameraPage extends ConsumerStatefulWidget {
   const CameraPage({super.key});
@@ -18,141 +11,47 @@ class CameraPage extends ConsumerStatefulWidget {
 }
 
 class _CameraPageState extends ConsumerState<CameraPage> {
-  late CameraController _cameraController;
-  bool _isCameraInitialized = false;
-  bool _isDetectionActive = false;
-  List<DetectionResult> _currentDetections = [];
-  Timer? _detectionTimer;
+  final YOLOViewController _yoloController = YOLOViewController();
+  List<YOLOResult> _currentDetections = [];
+  double _fps = 0.0;
+  bool _isModelLoaded = false;
 
   @override
   void initState() {
     super.initState();
-    _initializeCamera();
+    // Configure YOLO thresholds
+    _yoloController.setThresholds(
+      confidenceThreshold: 0.5,
+      iouThreshold: 0.45,
+      numItemsThreshold: 30,
+    );
   }
 
-  Future<void> _initializeCamera() async {
-    try {
-      final cameras = await availableCameras();
-      if (cameras.isNotEmpty) {
-        _cameraController = CameraController(
-          cameras[0],
-          ResolutionPreset.high,
-          enableAudio: false,
-        );
-
-        await _cameraController.initialize();
-
-        if (mounted) {
-          setState(() {
-            _isCameraInitialized = true;
-          });
-
-          await ref.read(cameraStateProvider.notifier).initializeCamera();
-          await ref.read(detectionStateProvider.notifier).initializeDetection();
-        }
-      }
-    } catch (e) {
-      print('Error initializing camera: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Camera initialization failed: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+  void _handleDetectionResults(List<YOLOResult> results) {
+    if (mounted) {
+      setState(() {
+        _currentDetections = results;
+        _isModelLoaded = true;
+      });
     }
   }
 
-  void _startDetection() async {
-    if (!_isCameraInitialized || _isDetectionActive) return;
-
-    setState(() {
-      _isDetectionActive = true;
-    });
-
-    await ref.read(detectionStateProvider.notifier).startDetection();
-
-    // Start processing frames at regular intervals
-    _detectionTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) async {
-      if (!_isDetectionActive || !_cameraController.value.isStreamingImages) return;
-
-      try {
-        // Capture current frame
-        _cameraController.startImageStream((CameraImage image) async {
-          if (!_isDetectionActive) return;
-
-          final detections = await ref.read(detectionStateProvider.notifier).processFrame(image);
-
-          if (detections != null && mounted) {
-            setState(() {
-              _currentDetections = detections;
-            });
-          }
-        });
-
-        // Stop image stream after processing
-        await Future.delayed(const Duration(milliseconds: 100));
-        await _cameraController.stopImageStream();
-      } catch (e) {
-        print('Error during detection: $e');
-      }
-    });
-  }
-
-  void _stopDetection() {
-    if (!_isDetectionActive) return;
-
-    setState(() {
-      _isDetectionActive = false;
-      _currentDetections = [];
-    });
-
-    _detectionTimer?.cancel();
-    _detectionTimer = null;
-
-    ref.read(detectionStateProvider.notifier).stopDetection();
-
-    try {
-      if (_cameraController.value.isStreamingImages) {
-        _cameraController.stopImageStream();
-      }
-    } catch (e) {
-      print('Error stopping image stream: $e');
-    }
-  }
-
-  String _getDetectionStateText(DetectionState detectionState) {
-    switch (detectionState.status) {
-      case DetectionStatus.initial:
-        return 'Detection Not Started';
-      case DetectionStatus.initializing:
-        return 'Initializing YOLO...';
-      case DetectionStatus.ready:
-        return 'Ready to Detect';
-      case DetectionStatus.detecting:
-        return 'Detecting Objects';
-      case DetectionStatus.error:
-        return 'Error: ${detectionState.errorMessage}';
+  void _handlePerformanceMetrics(YOLOPerformanceMetrics metrics) {
+    if (mounted) {
+      setState(() {
+        _fps = metrics.fps;
+      });
     }
   }
 
   @override
   void dispose() {
-    _stopDetection();
-    if (_isCameraInitialized) {
-      _cameraController.dispose();
-    }
-    ref.read(cameraStateProvider.notifier).disposeCamera();
-    ref.read(detectionStateProvider.notifier).dispose();
+    // YOLOView handles its own disposal
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final cameraState = ref.watch(cameraStateProvider);
-    final detectionState = ref.watch(detectionStateProvider);
-
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -164,56 +63,47 @@ class _CameraPageState extends ConsumerState<CameraPage> {
         ),
         automaticallyImplyLeading: false,
         actions: [
-          // Detection toggle button
-          IconButton(
-            onPressed: () {
-              if (_isDetectionActive) {
-                _stopDetection();
-              } else {
-                _startDetection();
-              }
-            },
-            icon: Icon(
-              _isDetectionActive ? Icons.pause : Icons.play_arrow,
-              color: _isDetectionActive ? Colors.red : Colors.green,
+          // FPS indicator
+          if (_fps > 0)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  '${_fps.toStringAsFixed(1)} FPS',
+                  style: const TextStyle(
+                    color: Colors.greenAccent,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
             ),
-          ),
         ],
       ),
       body: Stack(
         children: [
-          if (_isCameraInitialized)
-            Stack(
-              children: [
-                CameraViewWidget(cameraController: _cameraController),
-                // Detection overlay
-                if (_currentDetections.isNotEmpty)
-                  Positioned.fill(
-                    child: DetectionOverlayWidget(
-                      detections: _currentDetections,
-                      cameraViewSize: MediaQuery.of(context).size,
-                    ),
-                  ),
-              ],
-            )
-          else
-            const Center(
-              child: CircularProgressIndicator(color: Colors.white),
-            ),
+          // YOLOView handles camera and detection automatically
+          YOLOView(
+            modelPath: 'best_float16.tflite',
+            task: YOLOTask.detect,
+            controller: _yoloController,
+            onResult: _handleDetectionResults,
+            onPerformanceMetrics: _handlePerformanceMetrics,
+            confidenceThreshold: 0.5,
+            iouThreshold: 0.45,
+            showNativeUI: false,
+            showOverlays: false, // Disable to avoid double overlays
+            cameraResolution: '720p',
+          ),
 
-          // Status information
+          // Status information overlay
           Positioned(
             top: 16,
             left: 16,
             right: 16,
             child: Column(
               children: [
-                AnalysisStatusWidget(
-                  cameraState: cameraState,
-                  detectionCount: _currentDetections.length,
-                ),
-                const SizedBox(height: 8),
-                // Detection state indicator
+                // Status indicator
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
@@ -224,13 +114,13 @@ class _CameraPageState extends ConsumerState<CameraPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        _isDetectionActive ? Icons.visibility : Icons.visibility_off,
-                        color: _isDetectionActive ? Colors.green : Colors.grey,
+                        _isModelLoaded ? Icons.check_circle : Icons.pending,
+                        color: _isModelLoaded ? Colors.green : Colors.orange,
                         size: 16,
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        _getDetectionStateText(detectionState),
+                        _isModelLoaded ? 'Model Loaded • Detecting' : 'Loading Model...',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 12,
@@ -255,6 +145,7 @@ class _CameraPageState extends ConsumerState<CameraPage> {
                 decoration: BoxDecoration(
                   color: Colors.black.withOpacity(0.8),
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.green.withOpacity(0.3), width: 1),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -263,19 +154,19 @@ class _CameraPageState extends ConsumerState<CameraPage> {
                     Text(
                       'Detected Objects (${_currentDetections.length}):',
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: Colors.greenAccent,
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                       ),
                     ),
                     const SizedBox(height: 8),
                     ...(_currentDetections
-                        .take(3)
+                        .take(5)
                         .map(
                           (detection) => Padding(
                             padding: const EdgeInsets.only(bottom: 4),
                             child: Text(
-                              '• ${detection.label} (${(detection.confidence * 100).toStringAsFixed(1)}%)',
+                              '• ${detection.className} (${(detection.confidence * 100).toStringAsFixed(1)}%)',
                               style: const TextStyle(
                                 color: Colors.white70,
                                 fontSize: 12,
@@ -284,9 +175,9 @@ class _CameraPageState extends ConsumerState<CameraPage> {
                           ),
                         )
                         .toList()),
-                    if (_currentDetections.length > 3)
+                    if (_currentDetections.length > 5)
                       Text(
-                        '... and ${_currentDetections.length - 3} more',
+                        '... and ${_currentDetections.length - 5} more',
                         style: const TextStyle(
                           color: Colors.white54,
                           fontSize: 12,
@@ -298,6 +189,7 @@ class _CameraPageState extends ConsumerState<CameraPage> {
               ),
             ),
 
+          // Bottom action buttons
           Positioned(
             bottom: 40,
             left: 20,
@@ -318,33 +210,35 @@ class _CameraPageState extends ConsumerState<CameraPage> {
                   child: const Icon(Icons.mic, color: Colors.white),
                 ),
 
-                GestureDetector(
-                  onTap: () {
-                    if (_isDetectionActive) {
-                      _stopDetection();
-                    } else {
-                      _startDetection();
+                // Camera switch button
+                FloatingActionButton.extended(
+                  onPressed: () async {
+                    try {
+                      await _yoloController.switchCamera();
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Camera switched'),
+                            duration: Duration(seconds: 1),
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Failed to switch camera: $e'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
                     }
                   },
-                  child: Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: _isDetectionActive ? Colors.red : Colors.green,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.3),
-                          blurRadius: 10,
-                          spreadRadius: 2,
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      _isDetectionActive ? Icons.stop : Icons.play_arrow,
-                      color: Colors.white,
-                      size: 30,
-                    ),
+                  backgroundColor: Colors.green,
+                  icon: const Icon(Icons.cameraswitch, color: Colors.white),
+                  label: const Text(
+                    'Switch',
+                    style: TextStyle(color: Colors.white),
                   ),
                 ),
 
@@ -357,7 +251,7 @@ class _CameraPageState extends ConsumerState<CameraPage> {
                       ),
                     );
                   },
-                  backgroundColor: Colors.green,
+                  backgroundColor: Colors.orange,
                   child: const Icon(Icons.map, color: Colors.white),
                 ),
               ],

@@ -47,6 +47,7 @@ dependencies:
   
   # Machine Learning & YOLO
   image: ^3.3.0
+  ultralytics_yolo: ^0.1.39
   
   # Location Services
   geolocator: ^10.1.1
@@ -63,7 +64,6 @@ dependencies:
   
   # Navigation
   go_router: ^12.1.3
-  ultralytics_yolo: ^0.1.39
 
 dev_dependencies:
   flutter_test:

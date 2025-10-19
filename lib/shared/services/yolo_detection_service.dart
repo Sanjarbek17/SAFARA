@@ -1,8 +1,5 @@
-import 'dart:io';
 import 'dart:typed_data';
-import 'package:flutter/services.dart';
 import 'package:camera/camera.dart';
-import 'package:image/image.dart' as img;
 import 'package:ultralytics_yolo/ultralytics_yolo.dart';
 
 /// Detection result data class
@@ -38,38 +35,29 @@ class DetectionResult {
 
 /// Service for handling YOLO object detection
 class YoloDetectionService {
-  static const String _modelPath = 'assets/models/best copy.pt';
-  
+  // Note: Using built-in model for now. Replace with your converted model later:
+  // static const String _modelPath = 'assets/models/best_copy.tflite'; // For Android
+  // static const String _modelPath = 'assets/models/best_copy.mlmodel'; // For iOS
+
   YOLO? _yolo;
   bool _isInitialized = false;
-  File? _modelFile;
 
   /// Initialize the YOLO detector with the model
   Future<void> initialize() async {
     if (_isInitialized) return;
 
     try {
-      // Load the model from assets and copy to temporary location
-      final ByteData data = await rootBundle.load(_modelPath);
-      final Uint8List bytes = data.buffer.asUint8List();
-      
-      // Create temporary file for the model
-      final Directory tempDir = Directory.systemTemp;
-      _modelFile = File('${tempDir.path}/best_copy.pt');
-      await _modelFile!.writeAsBytes(bytes);
-      
-      // Initialize YOLO with the model
+      // Use your custom TensorFlow Lite model
       _yolo = YOLO(
-        modelPath: _modelFile!.path,
+        modelPath: 'best_float16.tflite', // Model in Android assets folder
         task: YOLOTask.detect,
-        useGpu: false, // Set to true if you want GPU acceleration
       );
-      
+
       // Load the model
       await _yolo!.loadModel();
-      
+
       _isInitialized = true;
-      print('YOLO detector initialized successfully with model: ${_modelFile!.path}');
+      print('YOLO detector initialized successfully with best_float16.tflite model');
     } catch (e) {
       print('Failed to initialize YOLO detector: $e');
       rethrow;
@@ -86,114 +74,102 @@ class YoloDetectionService {
     }
 
     try {
-      // Convert CameraImage to the format required by YOLO
-      final img.Image? image = _convertCameraImage(cameraImage);
-      if (image == null) return null;
+      // Convert CameraImage to proper format for YOLO
+      final Uint8List imageBytes = _convertCameraImageToBytes(cameraImage);
 
-      // Convert image to bytes (PNG format)
-      final Uint8List imageBytes = Uint8List.fromList(img.encodePng(image));
+      // Run YOLO prediction
+      final results = await _yolo!.predict(imageBytes);
 
-      // Perform YOLO detection
-      final Map<String, dynamic> results = await _yolo!.predict(
-        imageBytes,
-        confidenceThreshold: 0.5, // Adjust confidence threshold as needed
-        iouThreshold: 0.4, // Adjust IoU threshold as needed
-      );
+      // Extract detections from results
+      final boxes = results['boxes'] as List<dynamic>? ?? [];
 
-      // Parse results and convert to DetectionResult objects
-      final List<DetectionResult> detections = [];
-      
-      if (results.containsKey('results') && results['results'] is List) {
-        final List<dynamic> resultsList = results['results'];
-        
-        for (final dynamic result in resultsList) {
-          if (result is Map<String, dynamic>) {
-            try {
-              final YOLOResult yoloResult = YOLOResult.fromMap(result);
-              detections.add(DetectionResult.fromYOLOResult(yoloResult));
-            } catch (e) {
-              print('Error parsing YOLO result: $e');
-              continue;
-            }
-          }
-        }
-      }
-
-      return detections;
+      // Convert to DetectionResult objects
+      return boxes.map((box) {
+        return DetectionResult(
+          label: box['class'] as String,
+          confidence: (box['confidence'] as num).toDouble(),
+          x: (box['x'] as num).toDouble(),
+          y: (box['y'] as num).toDouble(),
+          width: (box['width'] as num).toDouble(),
+          height: (box['height'] as num).toDouble(),
+        );
+      }).toList();
     } catch (e) {
       print('Error during object detection: $e');
       return null;
     }
   }
 
-  /// Convert CameraImage to img.Image format
-  img.Image? _convertCameraImage(CameraImage cameraImage) {
+  /// Convert CameraImage to Uint8List format expected by YOLO
+  Uint8List _convertCameraImageToBytes(CameraImage cameraImage) {
     try {
       if (cameraImage.format.group == ImageFormatGroup.yuv420) {
-        return _convertYUV420ToImage(cameraImage);
+        return _convertYUV420ToRGB(cameraImage);
       } else if (cameraImage.format.group == ImageFormatGroup.bgra8888) {
-        return _convertBGRA8888ToImage(cameraImage);
+        return _convertBGRA8888ToRGB(cameraImage);
       } else {
-        print('Unsupported image format: ${cameraImage.format.group}');
-        return null;
+        // Fallback: just return the first plane bytes
+        return cameraImage.planes[0].bytes;
       }
     } catch (e) {
       print('Error converting camera image: $e');
-      return null;
+      // Fallback: return first plane bytes
+      return cameraImage.planes[0].bytes;
     }
   }
 
-  /// Convert YUV420 format to img.Image
-  img.Image? _convertYUV420ToImage(CameraImage cameraImage) {
+  /// Convert YUV420 to RGB format
+  Uint8List _convertYUV420ToRGB(CameraImage cameraImage) {
     final int width = cameraImage.width;
     final int height = cameraImage.height;
 
     final int uvRowStride = cameraImage.planes[1].bytesPerRow;
     final int uvPixelStride = cameraImage.planes[1].bytesPerPixel ?? 1;
 
-    final img.Image image = img.Image(width, height);
+    final Uint8List rgbBytes = Uint8List(width * height * 3);
 
     for (int y = 0; y < height; y++) {
       for (int x = 0; x < width; x++) {
-        final int uvIndex = uvPixelStride * (x ~/ 2).floor() + uvRowStride * (y ~/ 2).floor();
+        final int uvIndex = uvPixelStride * (x ~/ 2) + uvRowStride * (y ~/ 2);
         final int index = y * width + x;
 
-        final yp = cameraImage.planes[0].bytes[index];
-        final up = cameraImage.planes[1].bytes[uvIndex];
-        final vp = cameraImage.planes[2].bytes[uvIndex];
+        final int yp = cameraImage.planes[0].bytes[index];
+        final int up = cameraImage.planes[1].bytes[uvIndex];
+        final int vp = cameraImage.planes[2].bytes[uvIndex];
 
+        // YUV to RGB conversion
         int r = (yp + vp * 1436 / 1024 - 179).round().clamp(0, 255);
         int g = (yp - up * 46549 / 131072 + 44 - vp * 93604 / 131072 + 91).round().clamp(0, 255);
         int b = (yp + up * 1814 / 1024 - 227).round().clamp(0, 255);
 
-        image.setPixel(x, y, img.Color.fromRgb(r, g, b));
+        final int rgbIndex = index * 3;
+        rgbBytes[rgbIndex] = r;
+        rgbBytes[rgbIndex + 1] = g;
+        rgbBytes[rgbIndex + 2] = b;
       }
     }
 
-    return image;
+    return rgbBytes;
   }
 
-  /// Convert BGRA8888 format to img.Image
-  img.Image? _convertBGRA8888ToImage(CameraImage cameraImage) {
+  /// Convert BGRA8888 to RGB format
+  Uint8List _convertBGRA8888ToRGB(CameraImage cameraImage) {
     final int width = cameraImage.width;
     final int height = cameraImage.height;
     final Uint8List bytes = cameraImage.planes[0].bytes;
 
-    final img.Image image = img.Image(width, height);
+    final Uint8List rgbBytes = Uint8List(width * height * 3);
 
-    for (int y = 0; y < height; y++) {
-      for (int x = 0; x < width; x++) {
-        final int index = (y * width + x) * 4;
-        final int b = bytes[index];
-        final int g = bytes[index + 1];
-        final int r = bytes[index + 2];
-        final int a = bytes[index + 3];
+    for (int i = 0; i < width * height; i++) {
+      final int bgraIndex = i * 4;
+      final int rgbIndex = i * 3;
 
-        image.setPixel(x, y, img.Color.fromRgba(r, g, b, a));
-      }
+      rgbBytes[rgbIndex] = bytes[bgraIndex + 2]; // R
+      rgbBytes[rgbIndex + 1] = bytes[bgraIndex + 1]; // G
+      rgbBytes[rgbIndex + 2] = bytes[bgraIndex]; // B
     }
 
-    return image;
+    return rgbBytes;
   }
 
   /// Dispose the detector and clean up resources
@@ -201,12 +177,10 @@ class YoloDetectionService {
     if (_isInitialized) {
       try {
         _yolo?.dispose();
-        _modelFile?.deleteSync();
       } catch (e) {
         print('Error disposing YOLO detector: $e');
       }
       _yolo = null;
-      _modelFile = null;
       _isInitialized = false;
       print('YOLO detector disposed');
     }
