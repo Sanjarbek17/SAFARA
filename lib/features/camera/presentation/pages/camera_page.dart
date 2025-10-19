@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ultralytics_yolo/ultralytics_yolo.dart';
 import 'package:ultralytics_yolo/widgets/yolo_controller.dart';
+import '../widgets/detection_overlay_painter.dart';
 
 class CameraPage extends ConsumerStatefulWidget {
   const CameraPage({super.key});
@@ -33,6 +34,13 @@ class _CameraPageState extends ConsumerState<CameraPage> {
         _currentDetections = results;
         _isModelLoaded = true;
       });
+
+      // Debug: Print first detection coordinates to understand format
+      if (results.isNotEmpty) {
+        final box = results.first.boundingBox;
+        print('DEBUG - BoundingBox: left=${box.left}, top=${box.top}, width=${box.width}, height=${box.height}');
+        print('DEBUG - BoundingBox: right=${box.right}, bottom=${box.bottom}');
+      }
     }
   }
 
@@ -84,17 +92,25 @@ class _CameraPageState extends ConsumerState<CameraPage> {
         children: [
           // YOLOView handles camera and detection automatically
           YOLOView(
-            modelPath: 'best_float16.tflite',
+            modelPath: 'best_float16.tflite', // Your custom model
             task: YOLOTask.detect,
             controller: _yoloController,
             onResult: _handleDetectionResults,
             onPerformanceMetrics: _handlePerformanceMetrics,
             confidenceThreshold: 0.5,
             iouThreshold: 0.45,
-            showNativeUI: false,
-            showOverlays: false, // Disable to avoid double overlays
+            showNativeUI: false, // Disable native UI
+            showOverlays: false, // Disable built-in overlay - using custom instead
             cameraResolution: '720p',
           ),
+
+          // Custom detection overlay (fixes duplicate bounding box issue)
+          if (_currentDetections.isNotEmpty)
+            Positioned.fill(
+              child: DetectionOverlay(
+                detections: _currentDetections,
+              ),
+            ),
 
           // Status information overlay
           Positioned(
