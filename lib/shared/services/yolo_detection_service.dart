@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/services.dart';
 import 'package:camera/camera.dart';
 import 'package:image/image.dart' as img;
+import 'package:ultralytics_yolo/ultralytics_yolo.dart';
 
 /// Detection result data class
 class DetectionResult {
@@ -21,12 +22,25 @@ class DetectionResult {
     required this.width,
     required this.height,
   });
+
+  /// Create DetectionResult from YOLOResult
+  factory DetectionResult.fromYOLOResult(YOLOResult yoloResult) {
+    return DetectionResult(
+      label: yoloResult.className,
+      confidence: yoloResult.confidence,
+      x: yoloResult.boundingBox.left,
+      y: yoloResult.boundingBox.top,
+      width: yoloResult.boundingBox.width,
+      height: yoloResult.boundingBox.height,
+    );
+  }
 }
 
 /// Service for handling YOLO object detection
 class YoloDetectionService {
   static const String _modelPath = 'assets/models/best copy.pt';
-
+  
+  YOLO? _yolo;
   bool _isInitialized = false;
   File? _modelFile;
 
@@ -38,12 +52,22 @@ class YoloDetectionService {
       // Load the model from assets and copy to temporary location
       final ByteData data = await rootBundle.load(_modelPath);
       final Uint8List bytes = data.buffer.asUint8List();
-
+      
       // Create temporary file for the model
       final Directory tempDir = Directory.systemTemp;
       _modelFile = File('${tempDir.path}/best_copy.pt');
       await _modelFile!.writeAsBytes(bytes);
-
+      
+      // Initialize YOLO with the model
+      _yolo = YOLO(
+        modelPath: _modelFile!.path,
+        task: YOLOTask.detect,
+        useGpu: false, // Set to true if you want GPU acceleration
+      );
+      
+      // Load the model
+      await _yolo!.loadModel();
+      
       _isInitialized = true;
       print('YOLO detector initialized successfully with model: ${_modelFile!.path}');
     } catch (e) {
@@ -57,7 +81,7 @@ class YoloDetectionService {
 
   /// Detect objects in camera image
   Future<List<DetectionResult>?> detectObjects(CameraImage cameraImage) async {
-    if (!_isInitialized || _modelFile == null) {
+    if (!_isInitialized || _yolo == null) {
       throw StateError('YOLO detector not initialized. Call initialize() first.');
     }
 
@@ -66,37 +90,40 @@ class YoloDetectionService {
       final img.Image? image = _convertCameraImage(cameraImage);
       if (image == null) return null;
 
-      // TODO: Implement actual YOLO detection using ultralytics_yolo package
-      // For now, return mock results to demonstrate the structure
-      final results = _mockDetection();
+      // Convert image to bytes (PNG format)
+      final Uint8List imageBytes = Uint8List.fromList(img.encodePng(image));
 
-      return results;
+      // Perform YOLO detection
+      final Map<String, dynamic> results = await _yolo!.predict(
+        imageBytes,
+        confidenceThreshold: 0.5, // Adjust confidence threshold as needed
+        iouThreshold: 0.4, // Adjust IoU threshold as needed
+      );
+
+      // Parse results and convert to DetectionResult objects
+      final List<DetectionResult> detections = [];
+      
+      if (results.containsKey('results') && results['results'] is List) {
+        final List<dynamic> resultsList = results['results'];
+        
+        for (final dynamic result in resultsList) {
+          if (result is Map<String, dynamic>) {
+            try {
+              final YOLOResult yoloResult = YOLOResult.fromMap(result);
+              detections.add(DetectionResult.fromYOLOResult(yoloResult));
+            } catch (e) {
+              print('Error parsing YOLO result: $e');
+              continue;
+            }
+          }
+        }
+      }
+
+      return detections;
     } catch (e) {
       print('Error during object detection: $e');
       return null;
     }
-  }
-
-  /// Mock detection results for testing
-  List<DetectionResult> _mockDetection() {
-    return [
-      DetectionResult(
-        label: 'person',
-        confidence: 0.85,
-        x: 100,
-        y: 200,
-        width: 150,
-        height: 300,
-      ),
-      DetectionResult(
-        label: 'car',
-        confidence: 0.75,
-        x: 300,
-        y: 400,
-        width: 200,
-        height: 150,
-      ),
-    ];
   }
 
   /// Convert CameraImage to img.Image format
@@ -173,10 +200,12 @@ class YoloDetectionService {
   void dispose() {
     if (_isInitialized) {
       try {
+        _yolo?.dispose();
         _modelFile?.deleteSync();
       } catch (e) {
-        print('Error deleting model file: $e');
+        print('Error disposing YOLO detector: $e');
       }
+      _yolo = null;
       _modelFile = null;
       _isInitialized = false;
       print('YOLO detector disposed');

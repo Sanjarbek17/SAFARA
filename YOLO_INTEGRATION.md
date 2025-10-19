@@ -48,17 +48,64 @@ The app is configured to use your `best copy.pt` model located in `assets/models
 - ✅ Camera integration
 - ✅ State management
 - ✅ UI components
-- ✅ Mock detection results
-- ⚠️ Actual YOLO detection (requires proper ultralytics_yolo API integration)
+- ✅ **Actual YOLO detection with ultralytics_yolo package**
+- ✅ Model loading and inference
+- ✅ Real-time detection results
+
+## Implementation Details
+
+### YOLO Integration
+
+The service now uses the actual `ultralytics_yolo` package API:
+
+```dart
+// Initialize YOLO with your custom model
+_yolo = YOLO(
+  modelPath: _modelFile!.path,
+  task: YOLOTask.detect,
+  useGpu: false, // Configurable GPU acceleration
+);
+
+// Load the model
+await _yolo!.loadModel();
+
+// Perform detection
+final Map<String, dynamic> results = await _yolo!.predict(
+  imageBytes,
+  confidenceThreshold: 0.5,
+  iouThreshold: 0.4,
+);
+```
+
+### Model Format Requirements
+
+Your `best copy.pt` model needs to be compatible with the platform:
+- **iOS**: Convert to CoreML format (`.mlmodel` or `.mlpackage`)
+- **Android**: Convert to TensorFlow Lite format (`.tflite`)
+
+To convert your PyTorch model:
+
+```python
+from ultralytics import YOLO
+
+# Load your model
+model = YOLO("best copy.pt")
+
+# Export for Android (TensorFlow Lite)
+model.export(format="tflite")
+
+# Export for iOS (CoreML) - requires nms=True for detection
+model.export(format="coreml", nms=True)
+```
 
 ## Next Steps
 
-To complete the YOLO integration:
-
-1. **Verify ultralytics_yolo API**: Check the exact API for the package version
-2. **Update detection calls**: Replace mock detection with actual YOLO inference
-3. **Optimize performance**: Implement frame throttling and async processing
-4. **Add error handling**: Better error messages and recovery
+1. **Convert Model**: Convert your `best copy.pt` to platform-specific formats
+2. **Update Asset Path**: Place the converted model in the correct location:
+   - iOS: Drag `.mlmodel` to `ios/Runner.xcworkspace`
+   - Android: Place `.tflite` in `android/app/src/main/assets/`
+3. **Update Model Path**: Change `_modelPath` to point to the converted model
+4. **Test Performance**: Adjust confidence and IoU thresholds for optimal results
 
 ## File Structure
 
