@@ -22,7 +22,6 @@ mixin _$CameraState {
     required TResult Function() initial,
     required TResult Function() initializing,
     required TResult Function() ready,
-    required TResult Function() detecting,
     required TResult Function(String message) error,
     required TResult Function() permissionDenied,
   }) => throw _privateConstructorUsedError;
@@ -31,7 +30,6 @@ mixin _$CameraState {
     TResult? Function()? initial,
     TResult? Function()? initializing,
     TResult? Function()? ready,
-    TResult? Function()? detecting,
     TResult? Function(String message)? error,
     TResult? Function()? permissionDenied,
   }) => throw _privateConstructorUsedError;
@@ -40,7 +38,6 @@ mixin _$CameraState {
     TResult Function()? initial,
     TResult Function()? initializing,
     TResult Function()? ready,
-    TResult Function()? detecting,
     TResult Function(String message)? error,
     TResult Function()? permissionDenied,
     required TResult orElse(),
@@ -50,7 +47,6 @@ mixin _$CameraState {
     required TResult Function(_Initial value) initial,
     required TResult Function(_Initializing value) initializing,
     required TResult Function(_Ready value) ready,
-    required TResult Function(_Detecting value) detecting,
     required TResult Function(_Error value) error,
     required TResult Function(_PermissionDenied value) permissionDenied,
   }) => throw _privateConstructorUsedError;
@@ -59,7 +55,6 @@ mixin _$CameraState {
     TResult? Function(_Initial value)? initial,
     TResult? Function(_Initializing value)? initializing,
     TResult? Function(_Ready value)? ready,
-    TResult? Function(_Detecting value)? detecting,
     TResult? Function(_Error value)? error,
     TResult? Function(_PermissionDenied value)? permissionDenied,
   }) => throw _privateConstructorUsedError;
@@ -68,7 +63,6 @@ mixin _$CameraState {
     TResult Function(_Initial value)? initial,
     TResult Function(_Initializing value)? initializing,
     TResult Function(_Ready value)? ready,
-    TResult Function(_Detecting value)? detecting,
     TResult Function(_Error value)? error,
     TResult Function(_PermissionDenied value)? permissionDenied,
     required TResult orElse(),
@@ -143,7 +137,6 @@ class _$InitialImpl implements _Initial {
     required TResult Function() initial,
     required TResult Function() initializing,
     required TResult Function() ready,
-    required TResult Function() detecting,
     required TResult Function(String message) error,
     required TResult Function() permissionDenied,
   }) {
@@ -156,7 +149,6 @@ class _$InitialImpl implements _Initial {
     TResult? Function()? initial,
     TResult? Function()? initializing,
     TResult? Function()? ready,
-    TResult? Function()? detecting,
     TResult? Function(String message)? error,
     TResult? Function()? permissionDenied,
   }) {
@@ -169,7 +161,6 @@ class _$InitialImpl implements _Initial {
     TResult Function()? initial,
     TResult Function()? initializing,
     TResult Function()? ready,
-    TResult Function()? detecting,
     TResult Function(String message)? error,
     TResult Function()? permissionDenied,
     required TResult orElse(),
@@ -186,7 +177,6 @@ class _$InitialImpl implements _Initial {
     required TResult Function(_Initial value) initial,
     required TResult Function(_Initializing value) initializing,
     required TResult Function(_Ready value) ready,
-    required TResult Function(_Detecting value) detecting,
     required TResult Function(_Error value) error,
     required TResult Function(_PermissionDenied value) permissionDenied,
   }) {
@@ -199,7 +189,6 @@ class _$InitialImpl implements _Initial {
     TResult? Function(_Initial value)? initial,
     TResult? Function(_Initializing value)? initializing,
     TResult? Function(_Ready value)? ready,
-    TResult? Function(_Detecting value)? detecting,
     TResult? Function(_Error value)? error,
     TResult? Function(_PermissionDenied value)? permissionDenied,
   }) {
@@ -212,7 +201,6 @@ class _$InitialImpl implements _Initial {
     TResult Function(_Initial value)? initial,
     TResult Function(_Initializing value)? initializing,
     TResult Function(_Ready value)? ready,
-    TResult Function(_Detecting value)? detecting,
     TResult Function(_Error value)? error,
     TResult Function(_PermissionDenied value)? permissionDenied,
     required TResult orElse(),
@@ -274,7 +262,6 @@ class _$InitializingImpl implements _Initializing {
     required TResult Function() initial,
     required TResult Function() initializing,
     required TResult Function() ready,
-    required TResult Function() detecting,
     required TResult Function(String message) error,
     required TResult Function() permissionDenied,
   }) {
@@ -287,7 +274,6 @@ class _$InitializingImpl implements _Initializing {
     TResult? Function()? initial,
     TResult? Function()? initializing,
     TResult? Function()? ready,
-    TResult? Function()? detecting,
     TResult? Function(String message)? error,
     TResult? Function()? permissionDenied,
   }) {
@@ -300,7 +286,6 @@ class _$InitializingImpl implements _Initializing {
     TResult Function()? initial,
     TResult Function()? initializing,
     TResult Function()? ready,
-    TResult Function()? detecting,
     TResult Function(String message)? error,
     TResult Function()? permissionDenied,
     required TResult orElse(),
@@ -317,7 +302,6 @@ class _$InitializingImpl implements _Initializing {
     required TResult Function(_Initial value) initial,
     required TResult Function(_Initializing value) initializing,
     required TResult Function(_Ready value) ready,
-    required TResult Function(_Detecting value) detecting,
     required TResult Function(_Error value) error,
     required TResult Function(_PermissionDenied value) permissionDenied,
   }) {
@@ -330,7 +314,6 @@ class _$InitializingImpl implements _Initializing {
     TResult? Function(_Initial value)? initial,
     TResult? Function(_Initializing value)? initializing,
     TResult? Function(_Ready value)? ready,
-    TResult? Function(_Detecting value)? detecting,
     TResult? Function(_Error value)? error,
     TResult? Function(_PermissionDenied value)? permissionDenied,
   }) {
@@ -343,7 +326,6 @@ class _$InitializingImpl implements _Initializing {
     TResult Function(_Initial value)? initial,
     TResult Function(_Initializing value)? initializing,
     TResult Function(_Ready value)? ready,
-    TResult Function(_Detecting value)? detecting,
     TResult Function(_Error value)? error,
     TResult Function(_PermissionDenied value)? permissionDenied,
     required TResult orElse(),
@@ -405,7 +387,6 @@ class _$ReadyImpl implements _Ready {
     required TResult Function() initial,
     required TResult Function() initializing,
     required TResult Function() ready,
-    required TResult Function() detecting,
     required TResult Function(String message) error,
     required TResult Function() permissionDenied,
   }) {
@@ -418,7 +399,6 @@ class _$ReadyImpl implements _Ready {
     TResult? Function()? initial,
     TResult? Function()? initializing,
     TResult? Function()? ready,
-    TResult? Function()? detecting,
     TResult? Function(String message)? error,
     TResult? Function()? permissionDenied,
   }) {
@@ -431,7 +411,6 @@ class _$ReadyImpl implements _Ready {
     TResult Function()? initial,
     TResult Function()? initializing,
     TResult Function()? ready,
-    TResult Function()? detecting,
     TResult Function(String message)? error,
     TResult Function()? permissionDenied,
     required TResult orElse(),
@@ -448,7 +427,6 @@ class _$ReadyImpl implements _Ready {
     required TResult Function(_Initial value) initial,
     required TResult Function(_Initializing value) initializing,
     required TResult Function(_Ready value) ready,
-    required TResult Function(_Detecting value) detecting,
     required TResult Function(_Error value) error,
     required TResult Function(_PermissionDenied value) permissionDenied,
   }) {
@@ -461,7 +439,6 @@ class _$ReadyImpl implements _Ready {
     TResult? Function(_Initial value)? initial,
     TResult? Function(_Initializing value)? initializing,
     TResult? Function(_Ready value)? ready,
-    TResult? Function(_Detecting value)? detecting,
     TResult? Function(_Error value)? error,
     TResult? Function(_PermissionDenied value)? permissionDenied,
   }) {
@@ -474,7 +451,6 @@ class _$ReadyImpl implements _Ready {
     TResult Function(_Initial value)? initial,
     TResult Function(_Initializing value)? initializing,
     TResult Function(_Ready value)? ready,
-    TResult Function(_Detecting value)? detecting,
     TResult Function(_Error value)? error,
     TResult Function(_PermissionDenied value)? permissionDenied,
     required TResult orElse(),
@@ -488,137 +464,6 @@ class _$ReadyImpl implements _Ready {
 
 abstract class _Ready implements CameraState {
   const factory _Ready() = _$ReadyImpl;
-}
-
-/// @nodoc
-abstract class _$$DetectingImplCopyWith<$Res> {
-  factory _$$DetectingImplCopyWith(
-    _$DetectingImpl value,
-    $Res Function(_$DetectingImpl) then,
-  ) = __$$DetectingImplCopyWithImpl<$Res>;
-}
-
-/// @nodoc
-class __$$DetectingImplCopyWithImpl<$Res>
-    extends _$CameraStateCopyWithImpl<$Res, _$DetectingImpl>
-    implements _$$DetectingImplCopyWith<$Res> {
-  __$$DetectingImplCopyWithImpl(
-    _$DetectingImpl _value,
-    $Res Function(_$DetectingImpl) _then,
-  ) : super(_value, _then);
-
-  /// Create a copy of CameraState
-  /// with the given fields replaced by the non-null parameter values.
-}
-
-/// @nodoc
-
-class _$DetectingImpl implements _Detecting {
-  const _$DetectingImpl();
-
-  @override
-  String toString() {
-    return 'CameraState.detecting()';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType && other is _$DetectingImpl);
-  }
-
-  @override
-  int get hashCode => runtimeType.hashCode;
-
-  @override
-  @optionalTypeArgs
-  TResult when<TResult extends Object?>({
-    required TResult Function() initial,
-    required TResult Function() initializing,
-    required TResult Function() ready,
-    required TResult Function() detecting,
-    required TResult Function(String message) error,
-    required TResult Function() permissionDenied,
-  }) {
-    return detecting();
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function()? initial,
-    TResult? Function()? initializing,
-    TResult? Function()? ready,
-    TResult? Function()? detecting,
-    TResult? Function(String message)? error,
-    TResult? Function()? permissionDenied,
-  }) {
-    return detecting?.call();
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult maybeWhen<TResult extends Object?>({
-    TResult Function()? initial,
-    TResult Function()? initializing,
-    TResult Function()? ready,
-    TResult Function()? detecting,
-    TResult Function(String message)? error,
-    TResult Function()? permissionDenied,
-    required TResult orElse(),
-  }) {
-    if (detecting != null) {
-      return detecting();
-    }
-    return orElse();
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult map<TResult extends Object?>({
-    required TResult Function(_Initial value) initial,
-    required TResult Function(_Initializing value) initializing,
-    required TResult Function(_Ready value) ready,
-    required TResult Function(_Detecting value) detecting,
-    required TResult Function(_Error value) error,
-    required TResult Function(_PermissionDenied value) permissionDenied,
-  }) {
-    return detecting(this);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult? mapOrNull<TResult extends Object?>({
-    TResult? Function(_Initial value)? initial,
-    TResult? Function(_Initializing value)? initializing,
-    TResult? Function(_Ready value)? ready,
-    TResult? Function(_Detecting value)? detecting,
-    TResult? Function(_Error value)? error,
-    TResult? Function(_PermissionDenied value)? permissionDenied,
-  }) {
-    return detecting?.call(this);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult maybeMap<TResult extends Object?>({
-    TResult Function(_Initial value)? initial,
-    TResult Function(_Initializing value)? initializing,
-    TResult Function(_Ready value)? ready,
-    TResult Function(_Detecting value)? detecting,
-    TResult Function(_Error value)? error,
-    TResult Function(_PermissionDenied value)? permissionDenied,
-    required TResult orElse(),
-  }) {
-    if (detecting != null) {
-      return detecting(this);
-    }
-    return orElse();
-  }
-}
-
-abstract class _Detecting implements CameraState {
-  const factory _Detecting() = _$DetectingImpl;
 }
 
 /// @nodoc
@@ -694,7 +539,6 @@ class _$ErrorImpl implements _Error {
     required TResult Function() initial,
     required TResult Function() initializing,
     required TResult Function() ready,
-    required TResult Function() detecting,
     required TResult Function(String message) error,
     required TResult Function() permissionDenied,
   }) {
@@ -707,7 +551,6 @@ class _$ErrorImpl implements _Error {
     TResult? Function()? initial,
     TResult? Function()? initializing,
     TResult? Function()? ready,
-    TResult? Function()? detecting,
     TResult? Function(String message)? error,
     TResult? Function()? permissionDenied,
   }) {
@@ -720,7 +563,6 @@ class _$ErrorImpl implements _Error {
     TResult Function()? initial,
     TResult Function()? initializing,
     TResult Function()? ready,
-    TResult Function()? detecting,
     TResult Function(String message)? error,
     TResult Function()? permissionDenied,
     required TResult orElse(),
@@ -737,7 +579,6 @@ class _$ErrorImpl implements _Error {
     required TResult Function(_Initial value) initial,
     required TResult Function(_Initializing value) initializing,
     required TResult Function(_Ready value) ready,
-    required TResult Function(_Detecting value) detecting,
     required TResult Function(_Error value) error,
     required TResult Function(_PermissionDenied value) permissionDenied,
   }) {
@@ -750,7 +591,6 @@ class _$ErrorImpl implements _Error {
     TResult? Function(_Initial value)? initial,
     TResult? Function(_Initializing value)? initializing,
     TResult? Function(_Ready value)? ready,
-    TResult? Function(_Detecting value)? detecting,
     TResult? Function(_Error value)? error,
     TResult? Function(_PermissionDenied value)? permissionDenied,
   }) {
@@ -763,7 +603,6 @@ class _$ErrorImpl implements _Error {
     TResult Function(_Initial value)? initial,
     TResult Function(_Initializing value)? initializing,
     TResult Function(_Ready value)? ready,
-    TResult Function(_Detecting value)? detecting,
     TResult Function(_Error value)? error,
     TResult Function(_PermissionDenied value)? permissionDenied,
     required TResult orElse(),
@@ -833,7 +672,6 @@ class _$PermissionDeniedImpl implements _PermissionDenied {
     required TResult Function() initial,
     required TResult Function() initializing,
     required TResult Function() ready,
-    required TResult Function() detecting,
     required TResult Function(String message) error,
     required TResult Function() permissionDenied,
   }) {
@@ -846,7 +684,6 @@ class _$PermissionDeniedImpl implements _PermissionDenied {
     TResult? Function()? initial,
     TResult? Function()? initializing,
     TResult? Function()? ready,
-    TResult? Function()? detecting,
     TResult? Function(String message)? error,
     TResult? Function()? permissionDenied,
   }) {
@@ -859,7 +696,6 @@ class _$PermissionDeniedImpl implements _PermissionDenied {
     TResult Function()? initial,
     TResult Function()? initializing,
     TResult Function()? ready,
-    TResult Function()? detecting,
     TResult Function(String message)? error,
     TResult Function()? permissionDenied,
     required TResult orElse(),
@@ -876,7 +712,6 @@ class _$PermissionDeniedImpl implements _PermissionDenied {
     required TResult Function(_Initial value) initial,
     required TResult Function(_Initializing value) initializing,
     required TResult Function(_Ready value) ready,
-    required TResult Function(_Detecting value) detecting,
     required TResult Function(_Error value) error,
     required TResult Function(_PermissionDenied value) permissionDenied,
   }) {
@@ -889,7 +724,6 @@ class _$PermissionDeniedImpl implements _PermissionDenied {
     TResult? Function(_Initial value)? initial,
     TResult? Function(_Initializing value)? initializing,
     TResult? Function(_Ready value)? ready,
-    TResult? Function(_Detecting value)? detecting,
     TResult? Function(_Error value)? error,
     TResult? Function(_PermissionDenied value)? permissionDenied,
   }) {
@@ -902,7 +736,6 @@ class _$PermissionDeniedImpl implements _PermissionDenied {
     TResult Function(_Initial value)? initial,
     TResult Function(_Initializing value)? initializing,
     TResult Function(_Ready value)? ready,
-    TResult Function(_Detecting value)? detecting,
     TResult Function(_Error value)? error,
     TResult Function(_PermissionDenied value)? permissionDenied,
     required TResult orElse(),

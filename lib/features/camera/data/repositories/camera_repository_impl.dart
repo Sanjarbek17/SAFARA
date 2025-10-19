@@ -1,54 +1,24 @@
-import 'dart:async';
-import 'dart:math';
+import 'package:permission_handler/permission_handler.dart';
 
-import '../../domain/entities/detection.dart';
 import '../../domain/entities/road_sign.dart';
 import '../../domain/repositories/camera_repository.dart';
-import '../datasources/yolo_detection_datasource.dart';
 
-/// Implementation of CameraRepository with YOLO detection capabilities
+/// Implementation of CameraRepository
 class CameraRepositoryImpl implements CameraRepository {
-  final YoloDetectionDataSource _detectionDataSource;
-  StreamSubscription<List<Detection>>? _detectionSubscription;
-  StreamController<List<Detection>>? _detectionController;
-
-  CameraRepositoryImpl(this._detectionDataSource);
+  CameraRepositoryImpl();
 
   @override
   Future<void> initializeCamera() async {
-    // Initialize YOLO detection service
-    print('🚀 Initializing camera with YOLO detection...');
-    await _detectionDataSource.initialize();
-    print('✅ Camera with YOLO detection initialized successfully');
+    // Initialize camera
+    print('🚀 Initializing camera...');
+    // Camera initialization logic can be added here
+    print('✅ Camera initialized successfully');
   }
 
   @override
   Future<void> disposeCamera() async {
-    await stopDetection();
-    _detectionController?.close();
-    _detectionController = null;
-    _detectionDataSource.dispose();
-
-    print('✅ Camera with YOLO detection disposed successfully');
-  }
-
-  @override
-  Stream<List<Detection>> startDetection() {
-    _detectionController?.close();
-    _detectionController = StreamController<List<Detection>>.broadcast();
-
-    // Start YOLO detection stream
-    _detectionSubscription = _detectionDataSource.startDetection().listen((detections) {
-      _detectionController?.add(detections);
-    });
-
-    return _detectionController!.stream;
-  }
-
-  @override
-  Future<void> stopDetection() async {
-    await _detectionSubscription?.cancel();
-    _detectionSubscription = null;
+    // Dispose camera resources
+    print('✅ Camera disposed successfully');
   }
 
   @override
@@ -84,56 +54,6 @@ class CameraRepositoryImpl implements CameraRepository {
         color: RoadSignType.speedLimit.primaryColor,
         isUrgent: RoadSignType.speedLimit.isUrgentByDefault,
       ),
-      RoadSign(
-        id: 'no_parking_001',
-        type: RoadSignType.noParking,
-        name: RoadSignType.noParking.displayName,
-        description: 'No parking allowed in this area',
-        audioKey: RoadSignType.noParking.audioKey,
-        priority: RoadSignType.noParking.defaultPriority,
-        color: RoadSignType.noParking.primaryColor,
-        isUrgent: RoadSignType.noParking.isUrgentByDefault,
-      ),
-      RoadSign(
-        id: 'school_zone_001',
-        type: RoadSignType.schoolZone,
-        name: RoadSignType.schoolZone.displayName,
-        description: 'Reduce speed, watch for children',
-        audioKey: RoadSignType.schoolZone.audioKey,
-        priority: RoadSignType.schoolZone.defaultPriority,
-        color: RoadSignType.schoolZone.primaryColor,
-        isUrgent: RoadSignType.schoolZone.isUrgentByDefault,
-      ),
-      RoadSign(
-        id: 'construction_001',
-        type: RoadSignType.constructionZone,
-        name: RoadSignType.constructionZone.displayName,
-        description: 'Construction ahead, be cautious',
-        audioKey: RoadSignType.constructionZone.audioKey,
-        priority: RoadSignType.constructionZone.defaultPriority,
-        color: RoadSignType.constructionZone.primaryColor,
-        isUrgent: RoadSignType.constructionZone.isUrgentByDefault,
-      ),
-      RoadSign(
-        id: 'pedestrian_001',
-        type: RoadSignType.pedestrianCrossing,
-        name: RoadSignType.pedestrianCrossing.displayName,
-        description: 'Pedestrian crossing ahead',
-        audioKey: RoadSignType.pedestrianCrossing.audioKey,
-        priority: RoadSignType.pedestrianCrossing.defaultPriority,
-        color: RoadSignType.pedestrianCrossing.primaryColor,
-        isUrgent: RoadSignType.pedestrianCrossing.isUrgentByDefault,
-      ),
-      RoadSign(
-        id: 'traffic_light_001',
-        type: RoadSignType.trafficLight,
-        name: RoadSignType.trafficLight.displayName,
-        description: 'Traffic light ahead',
-        audioKey: RoadSignType.trafficLight.audioKey,
-        priority: RoadSignType.trafficLight.defaultPriority,
-        color: RoadSignType.trafficLight.primaryColor,
-        isUrgent: RoadSignType.trafficLight.isUrgentByDefault,
-      ),
     ];
   }
 
@@ -150,21 +70,15 @@ class CameraRepositoryImpl implements CameraRepository {
 
   @override
   Future<bool> hasCameraPermission() async {
-    // Simulate permission check
-    await Future.delayed(const Duration(milliseconds: 100));
-
-    // In a real implementation, this would check actual camera permissions
-    // For now, we'll randomly return true most of the time for demo purposes
-    return Random().nextBool() || Random().nextBool();
+    // Check actual camera permissions
+    final status = await Permission.camera.status;
+    return status.isGranted;
   }
 
   @override
   Future<bool> requestCameraPermission() async {
-    // Simulate permission request delay
-    await Future.delayed(const Duration(milliseconds: 800));
-
-    // In a real implementation, this would request actual camera permissions
-    // For demo purposes, we'll assume permission is granted
-    return true;
+    // Request camera permissions
+    final status = await Permission.camera.request();
+    return status.isGranted;
   }
 }

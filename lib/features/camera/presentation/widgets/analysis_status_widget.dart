@@ -51,8 +51,8 @@ class AnalysisStatusWidget extends StatelessWidget {
             ),
           ),
 
-          // Detection count
-          if (cameraState == const CameraState.detecting())
+          // Detection count (only show when camera is ready)
+          if (cameraState == const CameraState.ready() && detectionCount > 0)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
@@ -78,7 +78,6 @@ class AnalysisStatusWidget extends StatelessWidget {
       initial: () => Colors.grey,
       initializing: () => Colors.orange,
       ready: () => Colors.green,
-      detecting: () => Colors.blue,
       error: (message) => Colors.red,
       permissionDenied: () => Colors.orange,
     );
@@ -88,8 +87,7 @@ class AnalysisStatusWidget extends StatelessWidget {
     return cameraState.when(
       initial: () => 'Camera not initialized',
       initializing: () => 'Initializing camera...',
-      ready: () => 'Ready to detect',
-      detecting: () => 'Analyzing road signs...',
+      ready: () => 'Camera ready',
       error: (message) => 'Error: $message',
       permissionDenied: () => 'Camera permission needed',
     );

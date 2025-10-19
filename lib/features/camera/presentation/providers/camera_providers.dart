@@ -1,41 +1,21 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import '../../domain/entities/detection.dart';
 import '../../domain/entities/road_sign.dart';
 import '../../domain/repositories/camera_repository.dart';
 import '../../data/repositories/camera_repository_impl.dart';
-import '../../data/datasources/yolo_detection_datasource.dart';
-import '../../../../shared/services/yolo_detection_service.dart';
 
 part 'camera_providers.freezed.dart';
 
-// YOLO service provider
-final yoloDetectionServiceProvider = Provider<YoloDetectionService>((ref) {
-  final service = YoloDetectionService();
-  ref.onDispose(() => service.dispose());
-  return service;
-});
-
-// YOLO data source provider
-final yoloDetectionDataSourceProvider = Provider<YoloDetectionDataSource>((ref) {
-  final dataSource = YoloDetectionDataSource(ref.read(yoloDetectionServiceProvider));
-  ref.onDispose(() => dataSource.dispose());
-  return dataSource;
-});
-
 // Repository provider
 final cameraRepositoryProvider = Provider<CameraRepository>((ref) {
-  return CameraRepositoryImpl(ref.read(yoloDetectionDataSourceProvider));
+  return CameraRepositoryImpl();
 });
 
 // Camera state provider
 final cameraStateProvider = StateNotifierProvider<CameraNotifier, CameraState>((ref) {
   return CameraNotifier(ref.read(cameraRepositoryProvider));
 });
-
-// Current detections provider
-final currentDetectionsProvider = StateProvider<List<Detection>>((ref) => []);
 
 // Camera permissions provider
 final cameraPermissionProvider = FutureProvider<bool>((ref) async {
@@ -55,7 +35,6 @@ class CameraState with _$CameraState {
   const factory CameraState.initial() = _Initial;
   const factory CameraState.initializing() = _Initializing;
   const factory CameraState.ready() = _Ready;
-  const factory CameraState.detecting() = _Detecting;
   const factory CameraState.error(String message) = _Error;
   const factory CameraState.permissionDenied() = _PermissionDenied;
 }
@@ -65,7 +44,7 @@ class CameraNotifier extends StateNotifier<CameraState> {
 
   CameraNotifier(this._repository) : super(const CameraState.initial());
 
-  /// Initialize camera with permission checks
+  /// Initialize camera with permissions check
   Future<void> initializeCamera() async {
     state = const CameraState.initializing();
 
@@ -87,45 +66,6 @@ class CameraNotifier extends StateNotifier<CameraState> {
       state = const CameraState.ready();
     } catch (e) {
       state = CameraState.error('Failed to initialize camera: ${e.toString()}');
-    }
-  }
-
-  /// Start detection analysis
-  Future<void> startDetection(WidgetRef ref) async {
-    if (state != const CameraState.ready()) {
-      return;
-    }
-
-    state = const CameraState.detecting();
-
-    try {
-      final detectionStream = _repository.startDetection();
-
-      detectionStream.listen(
-        (detections) {
-          // Update current detections
-          ref.read(currentDetectionsProvider.notifier).state = detections;
-        },
-        onError: (error) {
-          state = CameraState.error('Detection error: ${error.toString()}');
-        },
-      );
-    } catch (e) {
-      state = CameraState.error('Failed to start detection: ${e.toString()}');
-    }
-  }
-
-  /// Stop detection analysis
-  Future<void> stopDetection(WidgetRef ref) async {
-    try {
-      await _repository.stopDetection();
-      ref.read(currentDetectionsProvider.notifier).state = [];
-
-      if (state == const CameraState.detecting()) {
-        state = const CameraState.ready();
-      }
-    } catch (e) {
-      state = CameraState.error('Failed to stop detection: ${e.toString()}');
     }
   }
 
